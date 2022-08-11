@@ -1,7 +1,6 @@
 package authentificate
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,7 +14,7 @@ import (
 var (
 	loginP = "admin"
 	passP  = "admin"
-	in     = bufio.NewReader(os.Stdin)
+	answer string
 )
 
 func CliClear() {
@@ -25,13 +24,14 @@ func CliClear() {
 }
 
 func Auth() bool {
+	CliClear()
 	for {
 		fmt.Print("Вы уже есть в чате? (y/n)\t")
-		var answer string
 		fmt.Scanln(&answer)
+
 		switch answer {
 		case "y":
-			if authentificate() {
+			if authenticate() {
 				CliClear()
 				return true
 			}
@@ -46,15 +46,16 @@ func Auth() bool {
 }
 
 func registration() bool {
-
+	var login, password, second_password string
 	fmt.Println("Введите логин: ")
-	login, _ := in.ReadString('\n')
+	fmt.Scanf("%s", &login)
 	fmt.Println("Введите пароль: ")
-	pass, _ := in.ReadString('\n')
+	fmt.Scanf("%s", &password)
+
 	for i := 0; i < 3; i++ {
 		fmt.Println("Введите повторно пароль: ")
-		pass2, _ := in.ReadString('\n')
-		if login == loginP && pass == pass2 {
+		fmt.Scanf("%s", &second_password)
+		if login == loginP && password == second_password {
 			fmt.Println("Вы зарегистрированы!")
 			return true
 		}
@@ -86,13 +87,15 @@ func connectDb() mongo.Client {
 	return *client
 }
 
-func authentificate() bool {
+func authenticate() bool {
+	var login, password string
+
 	for i := 0; i < 3; i++ {
-		fmt.Println("Введите логин: ")
-		login, _ := in.ReadString('\n')
-		fmt.Println("Введите пароль: ")
-		pass, _ := in.ReadString('\n')
-		if login == loginP && pass == passP {
+		fmt.Print("Введите логин: ")
+		fmt.Scanf("%s", &login)
+		fmt.Print("Введите пароль: ")
+		fmt.Scanf("%s", &password)
+		if login == loginP && password == passP {
 			fmt.Println("Вы авторизованы!")
 			return true
 		}

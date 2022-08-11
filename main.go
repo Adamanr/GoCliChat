@@ -2,6 +2,7 @@ package main
 
 import (
 	"CliChat/functional/authentificate"
+	Chats "CliChat/functional/chat"
 	Structs "CliChat/functional/struct"
 	"bufio"
 	"fmt"
@@ -18,11 +19,10 @@ func printHelp() {
 		"/help - вывести список команд\n" +
 		"/create - создать комнату\n" +
 		"/join - присоединиться к комнате\n" +
-		"/leave - покинуть комнату\n" +
 		"/list - показать список комнат\n" +
-		"/users - показать список пользователей в комнате\n" +
 		"################################################")
 }
+
 func printRooms(chat Structs.Chat) {
 	fmt.Println("Список комнат: ")
 	if chat.Rooms != nil {
@@ -34,88 +34,88 @@ func printRooms(chat Structs.Chat) {
 	fmt.Println("-#-Нет комнат-#-")
 }
 
-func createRoom(chat Structs.Chat) Structs.Room {
+func createRoom() Structs.Room {
+	var password, name, answer string
+	var room Structs.Room
 	roomId := rand.Intn(100)
 
-	fmt.Print("Введите название комнаты: ")
-	name, _ := in.ReadString('\n')
+	fmt.Scan(&name)
+
 	fmt.Print("Вы хотите задать пароль комнате? (y/n)\t")
-	answer, _ := in.ReadString('\n')
+	fmt.Scanf("%s", &answer)
+
 	switch answer {
 	case "y":
 		fmt.Print("Введите пароль: ")
-		password, _ := in.ReadString('\n')
-		chat.Rooms = append(chat.Rooms, Structs.Room{Id: roomId, Name: name, Password: password})
-		fmt.Printf("Комната создана!\nId: %d | Room Name: %s | password: %s\n", roomId, name, chat.Rooms[len(chat.Rooms)-1].Password)
+		fmt.Scanf("%s", &password)
+		room = Structs.Room{Id: roomId, Name: name, Password: password}
+		fmt.Printf("Комната [ Id: %d | Room Name: %s | password: %s ]\n", room.Id, room.Name, room.Password)
 		break
 	case "n":
-		chat.Rooms = append(chat.Rooms, Structs.Room{Id: roomId, Name: name})
-		fmt.Printf("Комната создана!\nId: %d | Room Name: %s\n", roomId, name)
+		room = Structs.Room{Id: roomId, Name: name}
+		fmt.Printf("Комната создана!\nId: %d | Room Name: %s\n", room.Id, room.Name)
 		break
 	}
-	fmt.Println("################################################")
-	return chat.Rooms[len(chat.Rooms)-1]
+	return room
 }
 
 func joinChat(chat Structs.Chat) {
 	var roomId int
 	var password string
-
-	if chat.Rooms != nil {
-		fmt.Println("Введите название комнаты: ")
-		fmt.Scanln(&roomId)
-
-		for _, room := range chat.Rooms {
-			if room.Id == roomId {
-				if room.Password != "" {
-					fmt.Print("В комнате есть пароль! (3 попытки)\n")
-					for i := 0; i < 3; i++ {
-						fmt.Print("Введите пароль: ")
-						password, _ = in.ReadString('\n')
-						if password == room.Password {
-							break
-						}
-						fmt.Println("Неверный пароль! Попробуйте еще раз!")
+	fmt.Scan(&roomId)
+	for _, v := range chat.Rooms {
+		if v.Id == roomId {
+			if v.Password != "" {
+				fmt.Println("В комнате установлен пароль")
+				for i := 0; i < 3; i++ {
+					fmt.Printf("Введите пароль (%d/3): ", i+1)
+					fmt.Scanf("%s", &password)
+					if i == 2 {
+						fmt.Println("Вы не ввели пароль в три раза")
+						return
 					}
 				}
-				//authentificate.CliClear()
-				fmt.Println("Вы присоединились к комнате!")
-				fmt.Println("В комнате ", room.Name, " пользователей: ", len(room.Users))
 			}
-			fmt.Println("Неправильный ID комнаты!")
 		}
 	}
-	fmt.Println("Активных комнат нет")
 }
 
 func main() {
-	authentificate.Auth()
-	authentificate.CliClear()
+	var answer string
 	var chat Structs.Chat
-	fmt.Printf("\tДобро пожаловать в чат!\n")
-	fmt.Printf("\tЗа помощью - /help\n\n")
-	for {
-		answer, _ := in.ReadString('\n')
-		switch answer {
-		case "/help":
-			printHelp()
+	var room Structs.Room
 
-		case "/create":
-			chat.Rooms = append(chat.Rooms, createRoom(chat))
-			break
-		case "/join":
-			joinChat(chat)
-			break
-		case "/leave":
-			break
-		case "/list":
-			printRooms(chat)
-			break
-		case "/users":
-			for _, room := range chat.Rooms {
-				fmt.Println(room.Users)
+	if authentificate.Auth() {
+		go Chats.Server()
+		authentificate.CliClear()
+		fmt.Printf("\tДобро пожаловать в чат!\n")
+		fmt.Printf("\tЗа помощью - /help\n\n")
+
+		for {
+			fmt.Println("###############Меню###############")
+			fmt.Scanf("%s", &answer)
+			switch answer {
+			case "/help":
+				printHelp()
+				break
+			case "/create":
+				room = createRoom()
+				chat.Rooms = append(chat.Rooms, room)
+				break
+			case "/join":
+				joinChat(chat)
+				break
+			case "/list":
+				printRooms(chat)
+				break
+			case "/exit":
+				os.Exit(0)
+				break
+			default:
+				fmt.Println("Неизвестная команда")
+				break
 			}
-			break
 		}
 	}
+
 }

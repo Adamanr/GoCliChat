@@ -1,5 +1,13 @@
 package Structs
 
+type User struct {
+	Id       int
+	Login    string
+	Password string
+	Level    int
+	Rooms    Room
+}
+
 type Message struct {
 	Message     string
 	User        string
@@ -9,7 +17,7 @@ type Message struct {
 type Room struct {
 	Id       int
 	Name     string
-	Users    []map[string]string
+	Users    []map[string]User
 	Password string
 	Message  []Message
 }
